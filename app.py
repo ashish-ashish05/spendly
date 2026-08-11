@@ -1,8 +1,9 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, session, flash
 from werkzeug.security import generate_password_hash
-from database.db import init_db, seed_db, create_user
+from database.db import init_db, seed_db, create_user, verify_user
 
 app = Flask(__name__)
+app.secret_key = "dev-secret-key-spendly"
 
 
 # ------------------------------------------------------------------ #
@@ -16,6 +17,10 @@ def landing():
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
+    if session.get("user_id"):
+        flash("You are already signed in!")
+        return redirect(url_for("landing"))
+
     if request.method == "POST":
         name = request.form.get("name", "").strip()
         email = request.form.get("email", "").strip()
@@ -35,8 +40,24 @@ def register():
     return render_template("register.html")
 
 
-@app.route("/login")
+@app.route("/login", methods=["GET", "POST"])
 def login():
+    if session.get("user_id"):
+        flash("You are already signed in!")
+        return redirect(url_for("landing"))
+
+    if request.method == "POST":
+        email = request.form.get("email", "").strip()
+        password = request.form.get("password", "").strip()
+
+        user = verify_user(email, password)
+        if user:
+            session["user_id"] = user["id"]
+            flash("Successfully signed in!")
+            return redirect(url_for("landing"))
+        else:
+            return render_template("login.html", error="Invalid email or password")
+
     return render_template("login.html")
 
 
@@ -56,7 +77,12 @@ def privacy():
 
 @app.route("/logout")
 def logout():
-    return "Logout — coming in Step 3"
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    session.pop("user_id", None)
+    flash("Successfully signed out!")
+    return redirect(url_for("landing"))
 
 
 @app.route("/profile")
