@@ -1,5 +1,5 @@
 import sqlite3
-from werkzeug.security import generate_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
 
 DATABASE_PATH = "spendly.db"
 
@@ -106,6 +106,24 @@ def create_user(name, email, password_hash):
             )
             return cursor.lastrowid
     except sqlite3.IntegrityError:
+        return None
+    finally:
+        conn.close()
+
+def verify_user(email, password):
+    """
+    Verifies a user's email and password.
+    Returns the user record on success, or None if authentication fails.
+    """
+    conn = get_db()
+    try:
+        user = conn.execute(
+            "SELECT * FROM users WHERE email = ?",
+            (email,)
+        ).fetchone()
+
+        if user and check_password_hash(user['password_hash'], password):
+            return user
         return None
     finally:
         conn.close()
