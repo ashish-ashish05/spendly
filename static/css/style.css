@@ -483,6 +483,7 @@ a { color: inherit; text-decoration: none; }
     margin-bottom: 0.75rem;
     text-align: center;
     font-weight: 500;
+    transition: opacity 0.5s ease, margin 0.5s ease;
 }
 
 .form-group { margin-bottom: 1.25rem; }
