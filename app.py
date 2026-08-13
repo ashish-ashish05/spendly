@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from werkzeug.security import generate_password_hash
 from database.db import init_db, seed_db, create_user, verify_user
+from database.queries import get_user_by_id, get_summary_stats, get_recent_transactions, get_category_breakdown
 
 app = Flask(__name__)
 app.secret_key = "dev-secret-key-spendly"
@@ -90,32 +91,12 @@ def profile():
     if "user_id" not in session:
         return redirect(url_for("login"))
 
-    user_profile = {
-        "name": "Ashish Kumar",
-        "email": "ashish@example.com",
-        "member_since": "January 2024"
-    }
+    user_id = session["user_id"]
 
-    summary_stats = {
-        "total_spent": "₹45,200",
-        "transaction_count": 128,
-        "top_category": "Food & Dining"
-    }
-
-    recent_transactions = [
-        {"date": "Aug 12, 2026", "description": "Starbucks Coffee", "category": "Food", "amount": "₹350"},
-        {"date": "Aug 11, 2026", "description": "Uber Trip", "category": "Transport", "amount": "₹420"},
-        {"date": "Aug 10, 2026", "description": "Amazon - Keyboard", "category": "Shopping", "amount": "₹2,500"},
-        {"date": "Aug 09, 2026", "description": "Grocery Store", "category": "Food", "amount": "₹1,200"},
-        {"date": "Aug 08, 2026", "description": "Electric Bill", "category": "Bills", "amount": "₹3,100"},
-    ]
-
-    category_breakdown = [
-        {"category": "Food", "amount": "₹12,000", "percentage": 26},
-        {"category": "Shopping", "amount": "₹15,000", "percentage": 33},
-        {"category": "Transport", "amount": "₹8,000", "percentage": 18},
-        {"category": "Bills", "amount": "₹10,200", "percentage": 23},
-    ]
+    user_profile = get_user_by_id(user_id)
+    summary_stats = get_summary_stats(user_id)
+    recent_transactions = get_recent_transactions(user_id)
+    category_breakdown = get_category_breakdown(user_id)
 
     return render_template(
         "profile.html",

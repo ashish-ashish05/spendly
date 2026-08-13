@@ -32,7 +32,7 @@
             <section class="stats-grid">
                 <div class="stat-card">
                     <span class="stat-label">Total Spent</span>
-                    <span class="stat-value">{{ stats.total_spent }}</span>
+                    <span class="stat-value">₹{{ stats.total_spent }}</span>
                 </div>
                 <div class="stat-card">
                     <span class="stat-label">Transactions</span>
@@ -70,7 +70,7 @@
                                         {{ tx.category }}
                                     </span>
                                 </td>
-                                <td class="text-right amount">{{ tx.amount }}</td>
+                                <td class="text-right amount">₹{{ tx.amount }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -88,7 +88,7 @@
                     <div class="cat-item">
                         <div class="cat-info">
                             <span class="cat-name">{{ cat.category }}</span>
-                            <span class="cat-amount">{{ cat.amount }}</span>
+                            <span class="cat-amount">₹{{ cat.amount }}</span>
                         </div>
                         <div class="cat-track">
                             <div class="cat-bar" style="width: {{ cat.percentage }}%;"></div>
