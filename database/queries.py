@@ -28,27 +28,40 @@ def get_user_by_id(user_id):
     finally:
         conn.close()
 
-def get_summary_stats(user_id):
+def get_summary_stats(user_id, start_date=None, end_date=None):
     """
     Calculates spending summary statistics for a user.
     Returns a dict with 'total_spent', 'transaction_count', 'top_category'.
     """
     conn = get_db()
     try:
-        # Total spent and transaction count
-        totals = conn.execute(
-            "SELECT SUM(amount), COUNT(*) FROM expenses WHERE user_id = ?",
-            (user_id,)
-        ).fetchone()
+        # Base query for total spent and transaction count
+        query = "SELECT SUM(amount), COUNT(*) FROM expenses WHERE user_id = ?"
+        params = [user_id]
+        if start_date:
+            query += " AND date >= ?"
+            params.append(start_date)
+        if end_date:
+            query += " AND date <= ?"
+            params.append(end_date)
 
-        total_spent = totals[0] if totals[0] is not None else 0
+        totals = conn.execute(query, params).fetchone()
+
+        total_spent = totals[0] if totals[0] is not None else 0.0
         transaction_count = totals[1] if totals[1] is not None else 0
 
         # Top category
-        top_cat_row = conn.execute(
-            "SELECT category FROM expenses WHERE user_id = ? GROUP BY category ORDER BY SUM(amount) DESC LIMIT 1",
-            (user_id,)
-        ).fetchone()
+        top_cat_query = "SELECT category FROM expenses WHERE user_id = ?"
+        top_cat_params = [user_id]
+        if start_date:
+            top_cat_query += " AND date >= ?"
+            top_cat_params.append(start_date)
+        if end_date:
+            top_cat_query += " AND date <= ?"
+            top_cat_params.append(end_date)
+
+        top_cat_query += " GROUP BY category ORDER BY SUM(amount) DESC LIMIT 1"
+        top_cat_row = conn.execute(top_cat_query, top_cat_params).fetchone()
 
         top_category = top_cat_row['category'] if top_cat_row else "—"
 
@@ -60,32 +73,48 @@ def get_summary_stats(user_id):
     finally:
         conn.close()
 
-def get_recent_transactions(user_id, limit=10):
+def get_recent_transactions(user_id, limit=10, start_date=None, end_date=None):
     """
     Fetches the most recent transactions for a user.
     Returns a list of dicts.
     """
     conn = get_db()
     try:
-        cursor = conn.execute(
-            "SELECT date, description, category, amount FROM expenses WHERE user_id = ? ORDER BY date DESC LIMIT ?",
-            (user_id, limit)
-        )
+        query = "SELECT date, description, category, amount FROM expenses WHERE user_id = ?"
+        params = [user_id]
+        if start_date:
+            query += " AND date >= ?"
+            params.append(start_date)
+        if end_date:
+            query += " AND date <= ?"
+            params.append(end_date)
+
+        query += " ORDER BY date DESC LIMIT ?"
+        params.append(limit)
+
+        cursor = conn.execute(query, params)
         return [dict(row) for row in cursor.fetchall()]
     finally:
         conn.close()
 
-def get_category_breakdown(user_id):
+def get_category_breakdown(user_id, start_date=None, end_date=None):
     """
     Calculates spending breakdown by category.
     Returns a list of dicts with 'category', 'amount', 'percentage'.
     """
     conn = get_db()
     try:
-        rows = conn.execute(
-            "SELECT category, SUM(amount) as total FROM expenses WHERE user_id = ? GROUP BY category ORDER BY total DESC",
-            (user_id,)
-        ).fetchall()
+        query = "SELECT category, SUM(amount) as total FROM expenses WHERE user_id = ?"
+        params = [user_id]
+        if start_date:
+            query += " AND date >= ?"
+            params.append(start_date)
+        if end_date:
+            query += " AND date <= ?"
+            params.append(end_date)
+
+        query += " GROUP BY category ORDER BY total DESC"
+        rows = conn.execute(query, params).fetchall()
 
         if not rows:
             return []
