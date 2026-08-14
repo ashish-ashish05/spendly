@@ -92,18 +92,22 @@ def profile():
         return redirect(url_for("login"))
 
     user_id = session["user_id"]
+    start_date = request.args.get("start_date")
+    end_date = request.args.get("end_date")
 
     user_profile = get_user_by_id(user_id)
-    summary_stats = get_summary_stats(user_id)
-    recent_transactions = get_recent_transactions(user_id)
-    category_breakdown = get_category_breakdown(user_id)
+    summary_stats = get_summary_stats(user_id, start_date, end_date)
+    recent_transactions = get_recent_transactions(user_id, start_date=start_date, end_date=end_date)
+    category_breakdown = get_category_breakdown(user_id, start_date, end_date)
 
     return render_template(
         "profile.html",
         user=user_profile,
         stats=summary_stats,
         transactions=recent_transactions,
-        categories=category_breakdown
+        categories=category_breakdown,
+        start_date=start_date,
+        end_date=end_date
     )
 
 
