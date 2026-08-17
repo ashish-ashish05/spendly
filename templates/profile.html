@@ -28,6 +28,23 @@
                 </div>
             </section>
 
+            <section class="filter-section">
+                <form method="GET" action="{{ url_for('profile') }}" class="filter-form">
+                    <div class="filter-group">
+                        <label for="start_date">From:</label>
+                        <input type="date" id="start_date" name="start_date" value="{{ start_date or '' }}">
+                    </div>
+                    <div class="filter-group">
+                        <label for="end_date">To:</label>
+                        <input type="date" id="end_date" name="end_date" value="{{ end_date or '' }}">
+                    </div>
+                    <div class="filter-actions">
+                        <button type="submit" class="btn-filter">Apply Filter</button>
+                        <a href="{{ url_for('profile') }}" class="btn-clear">Clear Filter</a>
+                    </div>
+                </form>
+            </section>
+
             <!-- Summary Stats Row -->
             <section class="stats-grid">
                 <div class="stat-card">
