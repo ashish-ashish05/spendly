@@ -1,7 +1,23 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import (
+    Flask,
+    render_template,
+    request,
+    redirect,
+    url_for,
+    session,
+    flash,
+    abort,
+)
 from werkzeug.security import generate_password_hash
 from database.db import init_db, seed_db, create_user, verify_user
-from database.queries import get_user_by_id, get_summary_stats, get_recent_transactions, get_category_breakdown
+from database.queries import (
+    get_user_by_id,
+    get_summary_stats,
+    get_recent_transactions,
+    get_category_breakdown,
+    get_expense_by_id,
+    update_expense,
+)
 
 app = Flask(__name__)
 app.secret_key = "dev-secret-key-spendly"
@@ -10,6 +26,7 @@ app.secret_key = "dev-secret-key-spendly"
 # ------------------------------------------------------------------ #
 # Routes                                                              #
 # ------------------------------------------------------------------ #
+
 
 @app.route("/")
 def landing():
@@ -76,6 +93,7 @@ def privacy():
 # Placeholder routes — students will implement these                  #
 # ------------------------------------------------------------------ #
 
+
 @app.route("/logout")
 def logout():
     if "user_id" not in session:
@@ -97,7 +115,9 @@ def profile():
 
     user_profile = get_user_by_id(user_id)
     summary_stats = get_summary_stats(user_id, start_date, end_date)
-    recent_transactions = get_recent_transactions(user_id, start_date=start_date, end_date=end_date)
+    recent_transactions = get_recent_transactions(
+        user_id, start_date=start_date, end_date=end_date
+    )
     category_breakdown = get_category_breakdown(user_id, start_date, end_date)
 
     return render_template(
@@ -107,7 +127,7 @@ def profile():
         transactions=recent_transactions,
         categories=category_breakdown,
         start_date=start_date,
-        end_date=end_date
+        end_date=end_date,
     )
 
 
@@ -123,28 +143,84 @@ def add_expense():
         description = request.form.get("description", "").strip()
 
         if not amount or not category or not date:
-            return render_template("expenses_add.html", error="Amount, category, and date are required")
+            return render_template(
+                "expenses_add.html", error="Amount, category, and date are required"
+            )
 
         try:
             amount_val = float(amount)
             if amount_val <= 0:
-                return render_template("expenses_add.html", error="Amount must be a positive number")
+                return render_template(
+                    "expenses_add.html", error="Amount must be a positive number"
+                )
         except ValueError:
-            return render_template("expenses_add.html", error="Amount must be a valid number")
+            return render_template(
+                "expenses_add.html", error="Amount must be a valid number"
+            )
 
         from database.queries import add_expense as db_add_expense
+
         if db_add_expense(session["user_id"], amount_val, category, date, description):
             flash("Expense added successfully!")
             return redirect(url_for("profile"))
         else:
-            return render_template("expenses_add.html", error="Failed to save expense to database")
+            return render_template(
+                "expenses_add.html", error="Failed to save expense to database"
+            )
 
     return render_template("expenses_add.html")
 
 
-@app.route("/expenses/<int:id>/edit")
+@app.route("/expenses/<int:id>/edit", methods=["GET", "POST"])
 def edit_expense(id):
-    return "Edit expense — coming in Step 8"
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    user_id = session["user_id"]
+    expense = get_expense_by_id(id)
+
+    if not expense or expense["user_id"] != user_id:
+        abort(404)
+
+    if request.method == "POST":
+        amount = request.form.get("amount", "").strip()
+        category = request.form.get("category", "").strip()
+        date = request.form.get("date", "").strip()
+        description = request.form.get("description", "").strip()
+
+        if not amount or not category or not date:
+            return render_template(
+                "expenses_edit.html",
+                expense=expense,
+                error="Amount, category, and date are required",
+            )
+
+        try:
+            amount_val = float(amount)
+            if amount_val <= 0:
+                return render_template(
+                    "expenses_edit.html",
+                    expense=expense,
+                    error="Amount must be a positive number",
+                )
+        except ValueError:
+            return render_template(
+                "expenses_edit.html",
+                expense=expense,
+                error="Amount must be a valid number",
+            )
+
+        if update_expense(id, amount_val, category, date, description):
+            flash("Expense updated successfully!")
+            return redirect(url_for("profile"))
+        else:
+            return render_template(
+                "expenses_edit.html",
+                expense=expense,
+                error="Failed to update expense in database",
+            )
+
+    return render_template("expenses_edit.html", expense=expense)
 
 
 @app.route("/expenses/<int:id>/delete")
