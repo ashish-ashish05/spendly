@@ -111,9 +111,35 @@ def profile():
     )
 
 
-@app.route("/expenses/add")
+@app.route("/expenses/add", methods=["GET", "POST"])
 def add_expense():
-    return "Add expense — coming in Step 7"
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    if request.method == "POST":
+        amount = request.form.get("amount", "").strip()
+        category = request.form.get("category", "").strip()
+        date = request.form.get("date", "").strip()
+        description = request.form.get("description", "").strip()
+
+        if not amount or not category or not date:
+            return render_template("expenses_add.html", error="Amount, category, and date are required")
+
+        try:
+            amount_val = float(amount)
+            if amount_val <= 0:
+                return render_template("expenses_add.html", error="Amount must be a positive number")
+        except ValueError:
+            return render_template("expenses_add.html", error="Amount must be a valid number")
+
+        from database.queries import add_expense as db_add_expense
+        if db_add_expense(session["user_id"], amount_val, category, date, description):
+            flash("Expense added successfully!")
+            return redirect(url_for("profile"))
+        else:
+            return render_template("expenses_add.html", error="Failed to save expense to database")
+
+    return render_template("expenses_add.html")
 
 
 @app.route("/expenses/<int:id>/edit")
