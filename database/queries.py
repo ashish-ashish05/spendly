@@ -2,6 +2,41 @@ import sqlite3
 from datetime import datetime
 from database.db import get_db
 
+
+def get_expense_by_id(expense_id):
+    """
+    Fetches a single expense record by its ID.
+    Returns the expense record as a dict or None if not found.
+    """
+    conn = get_db()
+    try:
+        user_expense = conn.execute(
+            "SELECT * FROM expenses WHERE id = ?", (expense_id,)
+        ).fetchone()
+        return dict(user_expense) if user_expense else None
+    finally:
+        conn.close()
+
+
+def update_expense(expense_id, amount, category, date, description):
+    """
+    Updates an existing expense record.
+    Returns True on success, False on failure.
+    """
+    conn = get_db()
+    try:
+        with conn:
+            conn.execute(
+                "UPDATE expenses SET amount = ?, category = ?, date = ?, description = ? WHERE id = ?",
+                (amount, category, date, description, expense_id),
+            )
+        return True
+    except sqlite3.Error:
+        return False
+    finally:
+        conn.close()
+
+
 def add_expense(user_id, amount, category, date, description):
     """
     Adds a new expense record for a user.
@@ -12,13 +47,14 @@ def add_expense(user_id, amount, category, date, description):
         with conn:
             conn.execute(
                 "INSERT INTO expenses (user_id, amount, category, date, description) VALUES (?, ?, ?, ?, ?)",
-                (user_id, amount, category, date, description)
+                (user_id, amount, category, date, description),
             )
         return True
     except sqlite3.Error:
         return False
     finally:
         conn.close()
+
 
 def get_user_by_id(user_id):
     """
@@ -28,24 +64,24 @@ def get_user_by_id(user_id):
     conn = get_db()
     try:
         user = conn.execute(
-            "SELECT name, email, created_at FROM users WHERE id = ?",
-            (user_id,)
+            "SELECT name, email, created_at FROM users WHERE id = ?", (user_id,)
         ).fetchone()
 
         if user:
             # created_at is in format 'YYYY-MM-DD HH:MM:SS'
-            created_at_str = user['created_at']
-            dt = datetime.strptime(created_at_str, '%Y-%m-%d %H:%M:%S')
-            member_since = dt.strftime('%B %Y')
+            created_at_str = user["created_at"]
+            dt = datetime.strptime(created_at_str, "%Y-%m-%d %H:%M:%S")
+            member_since = dt.strftime("%B %Y")
 
             return {
-                "name": user['name'],
-                "email": user['email'],
-                "member_since": member_since
+                "name": user["name"],
+                "email": user["email"],
+                "member_since": member_since,
             }
         return None
     finally:
         conn.close()
+
 
 def get_summary_stats(user_id, start_date=None, end_date=None):
     """
@@ -82,15 +118,16 @@ def get_summary_stats(user_id, start_date=None, end_date=None):
         top_cat_query += " GROUP BY category ORDER BY SUM(amount) DESC LIMIT 1"
         top_cat_row = conn.execute(top_cat_query, top_cat_params).fetchone()
 
-        top_category = top_cat_row['category'] if top_cat_row else "—"
+        top_category = top_cat_row["category"] if top_cat_row else "—"
 
         return {
             "total_spent": total_spent,
             "transaction_count": transaction_count,
-            "top_category": top_category
+            "top_category": top_category,
         }
     finally:
         conn.close()
+
 
 def get_recent_transactions(user_id, limit=10, start_date=None, end_date=None):
     """
@@ -99,7 +136,7 @@ def get_recent_transactions(user_id, limit=10, start_date=None, end_date=None):
     """
     conn = get_db()
     try:
-        query = "SELECT date, description, category, amount FROM expenses WHERE user_id = ?"
+        query = "SELECT id, date, description, category, amount FROM expenses WHERE user_id = ?"
         params = [user_id]
         if start_date:
             query += " AND date >= ?"
@@ -115,6 +152,7 @@ def get_recent_transactions(user_id, limit=10, start_date=None, end_date=None):
         return [dict(row) for row in cursor.fetchall()]
     finally:
         conn.close()
+
 
 def get_category_breakdown(user_id, start_date=None, end_date=None):
     """
@@ -138,19 +176,24 @@ def get_category_breakdown(user_id, start_date=None, end_date=None):
         if not rows:
             return []
 
-        total_spent = sum(row['total'] for row in rows)
+        total_spent = sum(row["total"] for row in rows)
         if total_spent == 0:
-            return [{"category": row['category'], "amount": row['total'], "percentage": 0} for row in rows]
+            return [
+                {"category": row["category"], "amount": row["total"], "percentage": 0}
+                for row in rows
+            ]
 
         breakdown = []
         sum_percentages = 0
         for row in rows:
-            percentage = round((row['total'] / total_spent) * 100)
-            breakdown.append({
-                "category": row['category'],
-                "amount": row['total'],
-                "percentage": percentage
-            })
+            percentage = round((row["total"] / total_spent) * 100)
+            breakdown.append(
+                {
+                    "category": row["category"],
+                    "amount": row["total"],
+                    "percentage": percentage,
+                }
+            )
             sum_percentages += percentage
 
         # Adjust the largest category to ensure the total is exactly 100%

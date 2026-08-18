@@ -228,7 +228,7 @@
 }
 
 .history-table td {
-    padding: 1rem 0;
+    padding: 1rem 0.75rem;
     border-bottom: 1px solid var(--border-soft);
     color: var(--ink-soft);
 }
@@ -245,6 +245,22 @@
 .amount {
     font-weight: 600;
     color: var(--ink);
+}
+
+.btn-edit-tx {
+    font-size: 0.75rem;
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 600;
+    padding: 0.25rem 0.5rem;
+    border: 1px solid var(--accent);
+    border-radius: var(--radius-sm);
+    transition: all 0.2s;
+}
+
+.btn-edit-tx:hover {
+    background: var(--accent);
+    color: var(--paper);
 }
 
 /* Badges */
