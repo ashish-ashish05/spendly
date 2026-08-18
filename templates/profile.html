@@ -61,27 +61,13 @@
                 </div>
             </section>
 
-            <section class="filter-section">
-                <form method="GET" action="{{ url_for('profile') }}" class="filter-form">
-                    <div class="filter-group">
-                        <label for="start_date">From:</label>
-                        <input type="date" id="start_date" name="start_date" value="{{ start_date or '' }}">
-                    </div>
-                    <div class="filter-group">
-                        <label for="end_date">To:</label>
-                        <input type="date" id="end_date" name="end_date" value="{{ end_date or '' }}">
-                    </div>
-                    <div class="filter-actions">
-                        <button type="submit" class="btn-filter">Apply Filter</button>
-                        <a href="{{ url_for('profile') }}" class="btn-clear">Clear Filter</a>
-                    </div>
-                </form>
-            </section>
-
             <!-- Transaction History -->
             <section class="history-section">
                 <div class="section-header">
-                    <h3>Recent Transactions</h3>
+                    <h3 style="display: flex; align-items: center; gap: 1rem;">
+                        Recent Transactions
+                        <a href="{{ url_for('add_expense') }}" class="btn-add-expense" style="font-size: 0.8rem; padding: 0.4rem 0.8rem; background: var(--primary-color, #000); color: #fff; text-decoration: none; border-radius: 0.4rem; font-weight: 500;">+ Add Expense</a>
+                    </h3>
                     <a href="#" class="view-all">View All</a>
                 </div>
                 <div class="table-container">

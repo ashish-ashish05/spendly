@@ -1,5 +1,24 @@
+import sqlite3
 from datetime import datetime
 from database.db import get_db
+
+def add_expense(user_id, amount, category, date, description):
+    """
+    Adds a new expense record for a user.
+    Returns True on success, False on failure.
+    """
+    conn = get_db()
+    try:
+        with conn:
+            conn.execute(
+                "INSERT INTO expenses (user_id, amount, category, date, description) VALUES (?, ?, ?, ?, ?)",
+                (user_id, amount, category, date, description)
+            )
+        return True
+    except sqlite3.Error:
+        return False
+    finally:
+        conn.close()
 
 def get_user_by_id(user_id):
     """
