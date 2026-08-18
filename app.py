@@ -17,6 +17,7 @@ from database.queries import (
     get_category_breakdown,
     get_expense_by_id,
     update_expense,
+    delete_expense,
 )
 
 app = Flask(__name__)
@@ -224,8 +225,22 @@ def edit_expense(id):
 
 
 @app.route("/expenses/<int:id>/delete")
-def delete_expense(id):
-    return "Delete expense — coming in Step 9"
+def delete_expense_route(id):
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    user_id = session["user_id"]
+    expense = get_expense_by_id(id)
+
+    if not expense or expense["user_id"] != user_id:
+        abort(404)
+
+    if delete_expense(id, user_id):
+        flash("Expense deleted successfully!")
+        return redirect(url_for("profile"))
+    else:
+        flash("Failed to delete expense. Please try again.")
+        return redirect(url_for("profile"))
 
 
 # Initialize database on startup
