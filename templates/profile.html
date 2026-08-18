@@ -94,6 +94,10 @@
                                 <td class="text-right amount">₹{{ tx.amount }}</td>
                                 <td class="text-right">
                                     <a href="{{ url_for('edit_expense', id=tx.id) }}" class="btn-edit-tx">Edit</a>
+                                    <a href="{{ url_for('delete_expense_route', id=tx.id) }}"
+                                       class="btn-delete-tx"
+                                       onclick="return confirm('Are you sure you want to delete this expense?');"
+                                       style="color: #dc3545; margin-left: 0.5rem;">Delete</a>
                                 </td>
                             </tr>
                             {% endfor %}

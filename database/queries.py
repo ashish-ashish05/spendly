@@ -56,6 +56,25 @@ def add_expense(user_id, amount, category, date, description):
         conn.close()
 
 
+def delete_expense(expense_id, user_id):
+    """
+    Deletes an expense record belonging to a specific user.
+    Returns True on success, False on failure.
+    """
+    conn = get_db()
+    try:
+        with conn:
+            conn.execute(
+                "DELETE FROM expenses WHERE id = ? AND user_id = ?",
+                (expense_id, user_id),
+            )
+        return True
+    except sqlite3.Error:
+        return False
+    finally:
+        conn.close()
+
+
 def get_user_by_id(user_id):
     """
     Fetches a user's profile information.
